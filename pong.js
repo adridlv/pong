@@ -31,8 +31,7 @@ window.onload = function(){
 		if (event.keyCode == 37) {
 			player.paddle.moveLeft = false;
 		}  
-	});
-	
+	});	
 }
 
 var step = function(){
@@ -46,6 +45,7 @@ var update = function(){
 	context.fillRect(0,0, width, height);
 	ball.move();
 	player.move();
+	computer.move(ball);
 }
 
 function Paddle(x,y,width,height){
@@ -68,10 +68,6 @@ function Player(){
 	this.paddle = new Paddle(175,550,50,10);
 }
 
-function Computer(){
-	this.paddle = new Paddle(175,30,50,10);
-}
-
 Player.prototype.render = function(){
 	this.paddle.render();
 }
@@ -87,6 +83,23 @@ Player.prototype.move = function(){
 	}
 }
 
+function Computer(){
+	this.paddle = new Paddle(175,30,50,10);
+}
+
+Computer.prototype.move = function(ball){
+	var diff = -((this.paddle.x + (this.paddle.width / 2)) - ball.x);
+
+	if(diff < -4) { // max speed left
+		diff = -5;
+  } else if(diff > 4) { // max speed right
+  	diff = 5;
+  }
+
+  if(this.paddle.x + diff > 0 && this.paddle.x + this.paddle.width + diff < width)
+  	this.paddle.x += diff;
+}
+
 Computer.prototype.render = function(){
 	this.paddle.render();
 }
@@ -94,8 +107,8 @@ Computer.prototype.render = function(){
 function Ball(x,y){
 	this.x = x;
 	this.y = y;
-	this.x_speed = 4;
-	this.y_speed = 4;
+	this.x_speed = 3;
+	this.y_speed = 3;
 	this.direction_y = 1;
 	this.direction_x = 1 ;
 	this.radius = 5;
@@ -118,9 +131,9 @@ Ball.prototype.move = function(){
 Ball.prototype.collision = function(player, computer){
 	//aqui hay que controlar el reseteo del juego con sus puntuaciones
 	if(this.y - this.radius < 0) 
-		this.direction_y *= -1; //lo multiplicamos por -1 para que sea indiferente si la direccion va a negativo o positivo. Si es positivo ponmelo a - y viceversa.
+		resetGame(); //lo multiplicamos por -1 para que sea indiferente si la direccion va a negativo o positivo. Si es positivo ponmelo a - y viceversa.
 	else if (this.y + this.radius > height)
-		this.direction_y *= -1;
+		resetGame();
 
 	if(this.x - this.radius < 0)
 		this.direction_x = 1;
@@ -131,15 +144,28 @@ Ball.prototype.collision = function(player, computer){
 		&& this.y + this.radius > player.paddle.y 
 		&& this.x - this.radius > player.paddle.x 
 		&& this.x + this.radius < player.paddle.x + player.paddle.width){
-			this.direction_y = -1;
-	}
+		this.direction_y = -1;
+	this.x_speed += player.paddle.x_speed / 3;
+}
 
-	if(this.y - this.radius < computer.paddle.y + computer.paddle.height 
-		&& this.y + this.radius > computer.paddle.y 
-		&& this.x - this.radius > computer.paddle.x 
-		&& this.x + this.radius < computer.paddle.x + computer.paddle.width){
-			this.direction_y = 1;
-	}
+if(this.y - this.radius < computer.paddle.y + computer.paddle.height 
+	&& this.y + this.radius > computer.paddle.y 
+	&& this.x - this.radius > computer.paddle.x 
+	&& this.x + this.radius < computer.paddle.x + computer.paddle.width){
+	this.direction_y = 1;
+this.x_speed += computer.paddle.x_speed / 3;
+}
+}
+
+function resetGame(){
+
+	ball.x_speed = 4;
+	ball.y_speed = 4;
+	ball.x = width/2;
+	ball.y = height/2;
+	player.paddle.x = width/2 - player.paddle.width/2;
+	computer.paddle.x = width/2 - player.paddle.width/2;
+
 }
 
 var player = new Player();
